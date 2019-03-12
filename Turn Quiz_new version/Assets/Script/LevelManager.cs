@@ -11,6 +11,9 @@ public class LevelManager : MonoBehaviour {
     public GameObject Wall_1;
     public GameObject Player;
     public GameObject Destination;
+    public GameObject LockDoor;
+    public GameObject Key;
+    public GameObject Turn_item;
     LevelInfo curLevel;
     Level level;
     //use in CreateLevelScene()
@@ -20,15 +23,17 @@ public class LevelManager : MonoBehaviour {
     //use in CheckMove()
     private int curX;  //player_x
     private int curY;
-
+    private int keyNum = 0;
+    GameObject mainCamera;
     //use in TurnScene()
     public Sprite Wall_0_sprite;
     public Sprite Wall_1_sprite;
 
 	// Use this for initialization
 	void Start () {
-        
-        GetCurLevel(2);
+        GameObject LevelControl = GameObject.FindWithTag("levelControl");
+        mainCamera = GameObject.FindWithTag("MainCamera");
+        GetCurLevel(LevelControl.GetComponent<levelControl>().GetLevelNo());
         CreateLevelScene();
         AdjustCamera();
 	}
@@ -57,6 +62,21 @@ public class LevelManager : MonoBehaviour {
                 curLevel.index_i = level.level_2_i;
                 curLevel.index_j = level.level_2_j;
                 break;
+            case 3:
+                curLevel.levelScene = level.level_3;
+                curLevel.index_i = level.level_3_i;
+                curLevel.index_j = level.level_3_j;
+                break;
+            case 4:
+                curLevel.levelScene = level.level_4;
+                curLevel.index_i = level.level_4_i;
+                curLevel.index_j = level.level_4_j;
+                break;
+            case 5:
+                curLevel.levelScene = level.level_5;
+                curLevel.index_i = level.level_5_i;
+                curLevel.index_j = level.level_5_j;
+                break;
         }
        
         curLevel.Wall_01_index_list = new List<Vector2>();
@@ -81,6 +101,9 @@ public class LevelManager : MonoBehaviour {
                                 curLevel.Wall_01_index_list.Add(new Vector2(i, j));curLevel.Wall_01_list.Add(newObject); break;
                     case 3: newObject = Instantiate(Wall_1, ScenePosition, Quaternion.identity) as GameObject;
                                 curLevel.Wall_01_index_list.Add(new Vector2(i, j)); curLevel.Wall_01_list.Add(newObject); break;
+                    case 4: newObject = Instantiate(LockDoor, ScenePosition, Quaternion.identity) as GameObject; break;
+                    case 5: newObject = Instantiate(Key, ScenePosition, Quaternion.identity) as GameObject; break;
+                    case 6: newObject = Instantiate(Turn_item, ScenePosition, Quaternion.identity) as GameObject;break;
                     default:break;
                 }
 
@@ -101,12 +124,38 @@ public class LevelManager : MonoBehaviour {
         {
             return false;
         }
+        else if(curLevel.levelScene[nextX,nextY]==4 && keyNum == 0)
+        {
+            
+            return false;
+        }
+        
         else
         {
+            if (curLevel.levelScene[nextX, nextY] == 5)
+            {
+                curLevel.levelScene[nextX, nextY] = 0;
+                keyNum++;
+            }
+            else if(curLevel.levelScene[nextX, nextY] == 4)
+            {
+                curLevel.levelScene[nextX, nextY] = 0;
+                keyNum--;
+            }
+            else if (curLevel.levelScene[nextX, nextY] == 6)
+            {
+                TurnScene();
+                curLevel.levelScene[nextX, nextY] = 0;
+            }
+            else if(curLevel.levelScene[nextX, nextY] == -2)
+            {
+                mainCamera.GetComponent<UIManager>().ClearTextSetActive();
+            }
             
             curX = nextX;
             curY = nextY;
-            TurnScene();
+            
+            TurnScene();            /////
             return true;
         }
     }
@@ -127,7 +176,7 @@ public class LevelManager : MonoBehaviour {
                 curLevel.Wall_01_list[i].GetComponent<SpriteRenderer>().sprite = Wall_1_sprite;
             }else if(curLevel.levelScene[wall_i, wall_j] == 3 &&( wall_i != curX || wall_j != curY))
             {
-                print("2");
+                
                 curLevel.levelScene[wall_i, wall_j] = 2;
                 curLevel.Wall_01_list[i].GetComponent<SpriteRenderer>().sprite = Wall_0_sprite;
             }

@@ -6,7 +6,7 @@ public class Player : MonoBehaviour {
 
     GameObject MainCamera;
     Vector2 moveDirection = Vector2.zero;
-
+  
 	// Use this for initialization
 	void Start () {
         MainCamera = GameObject.FindWithTag("MainCamera");
@@ -20,6 +20,7 @@ public class Player : MonoBehaviour {
 
     void MovePlayer()
     {
+        
         if (Input.GetKeyDown(KeyCode.UpArrow)){
             moveDirection = Vector2.up;
            
@@ -32,7 +33,11 @@ public class Player : MonoBehaviour {
         }
         else if (Input.GetKeyDown(KeyCode.RightArrow)){
             moveDirection = Vector2.right;
-            
+
+        }
+        else
+        {
+            return;
         }
         if (MainCamera.GetComponent<LevelManager>().CheckMove(moveDirection))
         {
@@ -40,9 +45,13 @@ public class Player : MonoBehaviour {
             //change map
         }
     }
+   
+    private void OnTriggerEnter2D (Collider2D collision)
+    {
+        
+        collision.gameObject.SetActive(false);
+    }
 
 
-
- 
 
 }
