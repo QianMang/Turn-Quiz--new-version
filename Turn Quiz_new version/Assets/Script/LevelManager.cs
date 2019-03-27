@@ -35,6 +35,7 @@ public class LevelManager : MonoBehaviour {
     //use in TurnScene()
     public Sprite Wall_0_sprite;
     public Sprite Wall_1_sprite;
+    bool turn_item_flag = false;
     //use in animation
     Vector3 changeScale = new Vector3(0.008f, 0.008f, 0);
 
@@ -85,6 +86,11 @@ public class LevelManager : MonoBehaviour {
                 curLevel.levelScene = level.level_5;
                 curLevel.index_i = level.level_5_i;
                 curLevel.index_j = level.level_5_j;
+                break;
+            case 6:
+                curLevel.levelScene = level.level_6;
+                curLevel.index_i = level.level_6_i;
+                curLevel.index_j = level.level_6_j;
                 break;
         }
        
@@ -139,7 +145,11 @@ public class LevelManager : MonoBehaviour {
 
     void AdjustCamera()
     {
-        this.transform.position = new Vector3(curLevel.index_j / 2, -curLevel.index_i / 2, -10);
+        int new_z=-10;
+        if(curLevel.index_i>=15|| curLevel.index_j>=15){
+            new_z = -15;
+        }
+        this.transform.position = new Vector3(curLevel.index_j / 2, -curLevel.index_i / 2, new_z);
     }
 
     public bool CheckMove(Vector2 direction)  //check and turn
@@ -174,7 +184,9 @@ public class LevelManager : MonoBehaviour {
             else if (curLevel.levelScene[nextX, nextY] == 6)
             {
                 Sound_get.GetComponent<AudioSource>().Play();
+                turn_item_flag = true;
                 TurnScene();
+                turn_item_flag = false;
                 curLevel.levelScene[nextX, nextY] = 0;
             }
             else if(curLevel.levelScene[nextX, nextY] == -2)      // level clear
@@ -201,12 +213,12 @@ public class LevelManager : MonoBehaviour {
             
             wall_i = (int)(curLevel.Wall_01_index_list[i].x);
             wall_j = (int)(curLevel.Wall_01_index_list[i].y);
-            if (curLevel.levelScene[wall_i,wall_j ] == 2 &&( wall_i != curX || wall_j!=curY))
+            if (curLevel.levelScene[wall_i,wall_j ] == 2 &&(turn_item_flag==true||( wall_i != curX || wall_j!=curY)))
             {
                
                 curLevel.levelScene[wall_i, wall_j] = 3;
                 curLevel.Wall_01_list[i].GetComponent<SpriteRenderer>().sprite = Wall_1_sprite;
-            }else if(curLevel.levelScene[wall_i, wall_j] == 3 &&( wall_i != curX || wall_j != curY))
+            }else if(curLevel.levelScene[wall_i, wall_j] == 3 && (turn_item_flag == true || ( wall_i != curX || wall_j != curY)))
             {
                 
                 curLevel.levelScene[wall_i, wall_j] = 2;
@@ -234,7 +246,7 @@ public class LevelManager : MonoBehaviour {
     }
     IEnumerator NextLevel(){
         yield return new WaitForSeconds(1.0f);
-        if (LevelControl.GetComponent<levelControl>().GetLevelNo() + 1 == 6)
+        if (LevelControl.GetComponent<levelControl>().GetLevelNo() + 1 == 7)
             mainCamera.GetComponent<UIManager>().ChooseLevel(LevelControl.GetComponent<levelControl>().GetLevelNo());
         else
             mainCamera.GetComponent<UIManager>().ChooseLevel(LevelControl.GetComponent<levelControl>().GetLevelNo()+1);
