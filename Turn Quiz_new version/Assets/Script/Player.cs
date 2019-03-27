@@ -43,6 +43,8 @@ public class Player : MonoBehaviour {
         {
             this.transform.Translate(moveDirection);
             //change map
+        }else{
+            MainCamera.GetComponent<ShakeCamera>().Shake();
         }
     }
    

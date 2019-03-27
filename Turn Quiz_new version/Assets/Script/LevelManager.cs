@@ -14,8 +14,15 @@ public class LevelManager : MonoBehaviour {
     public GameObject LockDoor;
     public GameObject Key;
     public GameObject Turn_item;
+    //audio
+    public GameObject Sound_door;
+    public GameObject Sound_get;
+    public GameObject Sound_win;
+    public GameObject Sound_btn;
+
     LevelInfo curLevel;
     Level level;
+    GameObject LevelControl;
     //use in CreateLevelScene()
     Vector3 ScenePosition;
     GameObject newObject;
@@ -28,10 +35,12 @@ public class LevelManager : MonoBehaviour {
     //use in TurnScene()
     public Sprite Wall_0_sprite;
     public Sprite Wall_1_sprite;
+    //use in animation
+    Vector3 changeScale = new Vector3(0.008f, 0.008f, 0);
 
 	// Use this for initialization
 	void Start () {
-        GameObject LevelControl = GameObject.FindWithTag("levelControl");
+        LevelControl = GameObject.FindWithTag("levelControl");
         mainCamera = GameObject.FindWithTag("MainCamera");
         GetCurLevel(LevelControl.GetComponent<levelControl>().GetLevelNo());
         CreateLevelScene();
@@ -81,6 +90,7 @@ public class LevelManager : MonoBehaviour {
        
         curLevel.Wall_01_index_list = new List<Vector2>();
         curLevel.Wall_01_list = new List<GameObject>();
+        curLevel.AllGameObjects_list = new List<GameObject>();
         
     }
 
@@ -94,19 +104,35 @@ public class LevelManager : MonoBehaviour {
                 switch (curLevel.levelScene[i,j])
                 {
                     case 0:break;
-                    case -2: newObject = Instantiate(Destination, ScenePosition, Quaternion.identity) as GameObject; break;
-                    case -1: newObject= Instantiate(Player, ScenePosition, Quaternion.identity) as GameObject; curX = i; curY = j;  break;
-                    case 1: newObject = Instantiate(Wall, ScenePosition, Quaternion.identity) as GameObject; break;
+                    case -2: newObject = Instantiate(Destination, ScenePosition, Quaternion.identity) as GameObject;
+                        //curLevel.AllGameObjects_list.Add(newObject);
+                        break;
+                    case -1: newObject= Instantiate(Player, ScenePosition, Quaternion.identity) as GameObject; curX = i; curY = j;
+                        curLevel.AllGameObjects_list.Add(newObject);
+                        break;
+                    case 1: newObject = Instantiate(Wall, ScenePosition, Quaternion.identity) as GameObject;//Debug.Log(newObject);
+                        curLevel.AllGameObjects_list.Add(newObject);
+                        break;
                     case 2: newObject = Instantiate(Wall_0, ScenePosition, Quaternion.identity) as GameObject;
-                                curLevel.Wall_01_index_list.Add(new Vector2(i, j));curLevel.Wall_01_list.Add(newObject); break;
+                                curLevel.Wall_01_index_list.Add(new Vector2(i, j));curLevel.Wall_01_list.Add(newObject);
+                        curLevel.AllGameObjects_list.Add(newObject);
+                        break;
                     case 3: newObject = Instantiate(Wall_1, ScenePosition, Quaternion.identity) as GameObject;
-                                curLevel.Wall_01_index_list.Add(new Vector2(i, j)); curLevel.Wall_01_list.Add(newObject); break;
-                    case 4: newObject = Instantiate(LockDoor, ScenePosition, Quaternion.identity) as GameObject; break;
-                    case 5: newObject = Instantiate(Key, ScenePosition, Quaternion.identity) as GameObject; break;
-                    case 6: newObject = Instantiate(Turn_item, ScenePosition, Quaternion.identity) as GameObject;break;
+                                curLevel.Wall_01_index_list.Add(new Vector2(i, j)); curLevel.Wall_01_list.Add(newObject);
+                        curLevel.AllGameObjects_list.Add(newObject);
+                        break;
+                    case 4: newObject = Instantiate(LockDoor, ScenePosition, Quaternion.identity) as GameObject;
+                        curLevel.AllGameObjects_list.Add(newObject);
+                        break;
+                    case 5: newObject = Instantiate(Key, ScenePosition, Quaternion.identity) as GameObject;
+                        curLevel.AllGameObjects_list.Add(newObject);
+                        break;
+                    case 6: newObject = Instantiate(Turn_item, ScenePosition, Quaternion.identity) as GameObject;
+                        curLevel.AllGameObjects_list.Add(newObject);
+                        break;
                     default:break;
                 }
-
+                
             }
         }
     }
@@ -132,24 +158,30 @@ public class LevelManager : MonoBehaviour {
         
         else
         {
-            if (curLevel.levelScene[nextX, nextY] == 5)
+            if (curLevel.levelScene[nextX, nextY] == 5)   //key
             {
+                Sound_get.GetComponent<AudioSource>().Play();
                 curLevel.levelScene[nextX, nextY] = 0;
                 keyNum++;
             }
-            else if(curLevel.levelScene[nextX, nextY] == 4)
+            else if(curLevel.levelScene[nextX, nextY] == 4)   //door
             {
+                Sound_door.GetComponent<AudioSource>().Play();
                 curLevel.levelScene[nextX, nextY] = 0;
                 keyNum--;
+
             }
             else if (curLevel.levelScene[nextX, nextY] == 6)
             {
+                Sound_get.GetComponent<AudioSource>().Play();
                 TurnScene();
                 curLevel.levelScene[nextX, nextY] = 0;
             }
-            else if(curLevel.levelScene[nextX, nextY] == -2)
+            else if(curLevel.levelScene[nextX, nextY] == -2)      // level clear
             {
+                Sound_win.GetComponent<AudioSource>().Play();
                 mainCamera.GetComponent<UIManager>().ClearTextSetActive();
+                ClearScene();
             }
             
             curX = nextX;
@@ -183,4 +215,28 @@ public class LevelManager : MonoBehaviour {
         }
     }
    
+    void ClearScene(){
+        for(int i=0;i<curLevel.AllGameObjects_list.Count;i++){
+            if(curLevel.AllGameObjects_list[i]!=null)
+                StartCoroutine(Animation_rotate_scale(curLevel.AllGameObjects_list[i]));
+        }
+        StartCoroutine(NextLevel());
+    }
+
+    IEnumerator Animation_rotate_scale(GameObject obj){
+        for (; obj.transform.localScale.x>0;)
+        {
+            obj.transform.localScale -= changeScale;
+            obj.transform.Rotate(0, 0, 2);
+            yield return null;
+        }
+        obj.SetActive(false);
+    }
+    IEnumerator NextLevel(){
+        yield return new WaitForSeconds(1.0f);
+        if (LevelControl.GetComponent<levelControl>().GetLevelNo() + 1 == 6)
+            mainCamera.GetComponent<UIManager>().ChooseLevel(LevelControl.GetComponent<levelControl>().GetLevelNo());
+        else
+            mainCamera.GetComponent<UIManager>().ChooseLevel(LevelControl.GetComponent<levelControl>().GetLevelNo()+1);
+    }
 }

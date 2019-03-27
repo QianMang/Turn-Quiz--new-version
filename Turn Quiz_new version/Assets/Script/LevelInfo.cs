@@ -10,7 +10,7 @@ public class LevelInfo{
     public int index_j;
     public  List<Vector2> Wall_01_index_list;
     public List<GameObject> Wall_01_list;
-   
+    public List<GameObject> AllGameObjects_list;
 
 }
 
